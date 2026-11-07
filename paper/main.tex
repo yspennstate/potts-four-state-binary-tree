@@ -1,0 +1,518 @@
+\documentclass[11pt]{amsart}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[margin=1.1in]{geometry}
+\usepackage{booktabs}
+\usepackage[colorlinks=true,allcolors=blue]{hyperref}
+\usepackage[capitalise,nameinlink]{cleveref}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Simp}{\Delta_4}
+\newcommand{\one}{\mathbf{1}}
+
+\title{The Kesten--Stigum bound is tight for the four-state Potts model on the binary tree}
+\author{Yitzchak Shmalo}
+\date{\today}
+
+\begin{document}
+
+\begin{abstract}
+Consider the broadcast of a uniformly random colour from the root of the infinite binary tree, where
+each edge copies its parent's colour with probability $\lambda+(1-\lambda)/4$ and otherwise chooses one
+of the other three colours uniformly. We prove that for $0<\lambda\le 1/\sqrt2$ the colours at depth
+$n$ carry asymptotically no information about the root colour. Since reconstruction is possible for
+$2\lambda^2>1$ by the theorem of Kesten and Stigum, the Kesten--Stigum bound is the reconstruction
+threshold for the ferromagnetic four-state Potts channel on the binary tree. The proof is computer
+assisted. A certified upper bound on the second moment of the root posterior, obtained from an exact
+finite-state upgrade of the belief-propagation recursion, places the limiting posterior law in a small
+neighbourhood of the uniform law; an exact polynomial certificate then shows that no nontrivial
+belief-propagation fixed point lies in that neighbourhood.
+\end{abstract}
+
+\maketitle
+
+\section{Introduction}
+
+Let $T$ be the infinite rooted binary tree. Fix $q\ge2$ and $\lambda\in(0,1)$ and let
+$M_\lambda=\lambda I+(1-\lambda)J$ be the $q\times q$ Potts channel, where $J$ has every entry $1/q$.
+The broadcast process assigns the root $\rho$ a uniform colour $\sigma_\rho\in[q]$ and passes colours
+down each edge independently through $M_\lambda$. Write $\sigma_{L_n}$ for the colours at depth $n$.
+The process is \emph{reconstructible} if
+\[
+\lim_{n\to\infty}\E\,\big\|\,\mathbb P(\sigma_\rho=\cdot\mid\sigma_{L_n})-q^{-1}\one\,\big\|_{\mathrm{TV}}>0,
+\]
+and nonreconstructible otherwise. Kesten and Stigum~\cite{KS66} showed that reconstruction holds when
+$d\lambda^2>1$ on the $d$-ary tree, and for $q=2$ this is sharp~\cite{BRZ95,EKPS00}. For larger $q$ the
+bound can fail to be sharp: Mossel~\cite{Mos01} showed that for $q$ large reconstruction holds below it,
+and Sly~\cite{Sly11} proved that the bound is not tight for $q\ge5$ and every large $d$, and that it is
+tight for $q=3$ and large $d$. Mossel, Sly and Sohn~\cite{MSS22} extended tightness to $q=4$ for large $d$.
+Ricci-Tersenghi, Semerjian and Zdeborov\'a~\cite{RSZ19} predicted, from an expansion of the cavity
+equations, that for the ferromagnetic four-state Potts model the Kesten--Stigum bound is tight for every
+degree distribution. For small degrees the rigorous results stop short of the bound;
+Bhatnagar and Maneva~\cite{BM11} developed a computational method for small trees and recorded the
+remaining gap.
+
+The main result of this paper settles the binary tree at $q=4$.
+
+\begin{theorem}\label{thm:main}
+For the four-state Potts channel on the binary tree, the broadcast process is nonreconstructible for
+every $0<\lambda\le1/\sqrt2$. In particular the reconstruction threshold equals the Kesten--Stigum bound
+$\lambda=1/\sqrt2$.
+\end{theorem}
+
+The proof has two parts of different kinds. The first is an upper bound on the second moment
+$x_n=\E\sum_i(p_i-1/4)^2$ of the root posterior $p=\mathbb P(\sigma_\rho=\cdot\mid\sigma_{L_n})$, valid
+for $n\ge500$ (\cref{prop:grid}). It is obtained by running the belief-propagation recursion on an
+information upgrade of the posterior law that lives on a finite grid, in exact integer arithmetic. The
+second is a fixed-point exclusion. The limit of the posterior laws is a fixed point of the
+belief-propagation map (\cref{lem:fixed}), and we construct an explicit function $K(a,b;m)$ of two
+messages and a scalar whose expectation at any fixed point equals $256(x-x_{\mathrm{out}})$ minus a
+positive multiple of $m^3$ (\cref{prop:expect}). A finite family of exact polynomial certificates shows
+$K\ge0$ on the region permitted by the first part (\cref{prop:kernel}). At a fixed point
+$x=x_{\mathrm{out}}$, so the second moment is zero.
+
+Neither part alone suffices. The grid bound $x_n\le0.0453$ is far from zero, and an exclusion argument
+based on a local expansion around the uniform law covers a much smaller neighbourhood. The kernel $K$ is chosen
+so that its region of validity reaches the grid bound. It combines the drift identity for the second
+moment with a family of $31$ functions whose expectations vanish at every colour-symmetric law, and a
+sign condition on the third moment that holds at every fixed point (\cref{prop:cubic}).
+
+\section{The recursion}\label{sec:recursion}
+
+Throughout $q=4$. Let $\Simp=\{p\in\R^4:p_i\ge0,\ \sum_ip_i=1\}$. A posterior $p$ is encoded by the
+\emph{message} $a=\lambda(4p-\one)$, which lies in $\lambda(4\Simp-\one)$ and has $\sum_ia_i=0$. If the
+two children of a vertex send messages $a$ and $b$, the posterior of the vertex is
+\[
+P_i=\frac{(1+a_i)(1+b_i)}{\sum_j(1+a_j)(1+b_j)},
+\qquad
+4P-\one=\frac{H}{s},
+\]
+where
+\[
+c=a\cdot b,\qquad s=1+\tfrac c4,\qquad H_i=a_i+b_i+a_ib_i-\tfrac c4 .
+\]
+The outgoing message is $\lambda H/s$. Let $\mu$ be the law of the message at a vertex, taken
+unconditionally on the root colour. The law $\mu$ is invariant under colour permutations and has mean
+zero. The two children's observations are independent given the parent's colour but not
+unconditionally; their joint law has density $s(a,b)$ with respect to $\mu\otimes\mu$. We call
+$\mu\otimes\mu$ the base measure and write $\E$ for expectations with respect to it, so the
+belief-propagation map $\mathcal T_\lambda$ is
+\begin{equation}\label{eq:bp}
+\int f\,d(\mathcal T_\lambda\mu)=\E\Big[s(a,b)\,f\big(\lambda H(a,b)/s(a,b)\big)\Big].
+\end{equation}
+We use the notation
+\[
+A=|a|^2,\quad B=|b|^2,\quad t_a=\textstyle\sum_ia_i^3,\quad t_b=\sum_ib_i^3,\quad
+p_{ij}=\sum_k a_k^ib_k^j,\quad \ell=p_{21}+p_{12},
+\]
+and the moments of $\mu$,
+\[
+m=\E A,\quad T=\E t_a,\quad V=\E A^2,\quad Q=\E\textstyle\sum_ia_i^4 .
+\]
+The second moment of the posterior is $x=\E\sum_i(p_i-1/4)^2=m/(16\lambda^2)$; at $\lambda=1/\sqrt2$,
+$m=8x$. From \eqref{eq:bp},
+\begin{equation}\label{eq:moments-out}
+m_{\mathrm{out}}=\lambda^2\,\E\Big[\frac Ns\Big],\quad
+T_{\mathrm{out}}=\lambda^3\,\E\Big[\frac J{s^2}\Big],\quad
+V_{\mathrm{out}}=\lambda^4\,\E\Big[\frac{N^2}{s^3}\Big],
+\qquad N=\textstyle\sum_iH_i^2,\ J=\sum_iH_i^3 .
+\end{equation}
+
+\section{The canonical bound}\label{sec:grid}
+
+Let $\mu_n$ be the law of the root message given depth $n$. Its second moment is $16\lambda^2x_n$.
+
+\begin{proposition}\label{prop:grid}
+Let
+\[
+U=\frac{1375940705703331}{30399297484750848}<0.04527 .
+\]
+For every $0<\lambda\le707107/10^6$ and every $n\ge500$, $x_n\le U$.
+\end{proposition}
+
+The proof compares experiments in the sense of Blackwell. A law of posteriors with uniform mean is an
+experiment about the root colour, and replacing it by a more informative experiment can only increase
+$x$, because $x$ is the expectation of a convex function of the posterior. Belief propagation preserves
+the order: if each child's experiment is replaced by a more informative one, so is the parent's. A
+posterior $p$ may be replaced by a random posterior with barycentre $p$ (reveal additional
+information); mass may be moved to the point posterior of a colour chosen by a colour-equivariant
+rule (full revelation). The finite computation starts at full revelation, which is the depth-zero
+law, and alternates one exact belief-propagation step with two such upgrades.
+
+\begin{lemma}[symmetric lattice splitting]\label{lem:split}
+Let $N\ge1$ and $p\in\Simp$. Write $Np_i=f_i+r_i$ with $f_i\in\mathbb Z$ and $0\le r_i<1$, and let
+$R=\sum_ir_i\in\{0,1,2,3\}$. Define a law on $N^{-1}\mathbb Z^4\cap\Simp$ as follows. If $R=0$, the
+point mass at $f/N$. If $R=1$, the point $(f+e_i)/N$ with weight $r_i$. If $R=3$, the point
+$(f+\one-e_i)/N$ with weight $1-r_i$. If $R=2$, with $h=\min_i\min(r_i,1-r_i)$, the point
+$(f+e_i+e_j)/N$ with weight
+\[
+w_{ij}=\max(r_i+r_j-1,0)+h/3\qquad(i<j).
+\]
+In every case the weights are nonnegative, sum to one, have barycentre $p$, and depend equivariantly
+on $p$ under colour permutations.
+\end{lemma}
+
+\begin{proof}
+The cases $R\in\{0,1,3\}$ are immediate. Let $R=2$ and sort the residuals $r_{(1)}\le r_{(2)}\le
+r_{(3)}\le r_{(4)}$. Then $r_{(1)}+r_{(2)}\le1$, $r_{(1)}+r_{(3)}\le1$, $r_{(2)}+r_{(4)}\ge1$ and
+$r_{(3)}+r_{(4)}\ge1$. If $r_{(1)}+r_{(4)}\ge1$, the positive excesses $r_i+r_j-1$ are those of the
+three pairs containing the largest residual, and for each coordinate $i$ the excesses of the pairs
+containing $i$ add up to $r_i-(1-r_{(4)})$. If $r_{(1)}+r_{(4)}\le1$, the positive excesses are those
+of the three pairs not containing the smallest residual, and the incident excesses add up to
+$r_i-r_{(1)}$. In both cases they add up to $r_i-h$, so adding $h/3$ to each of the three pairs at $i$
+gives total weight $r_i$ at coordinate $i$. Summing over $i$ counts each pair twice, so the weights add
+up to $R/2=1$. The barycentre is $(f+\sum_{i<j}w_{ij}(e_i+e_j))/N=(f+r)/N=p$.
+\end{proof}
+
+\begin{proof}[Proof of \cref{prop:grid}]
+Write $\lambda^*=707107/10^6$; note $2(\lambda^*)^2>1$. Take $N=36$ and work with laws supported on
+$\{v/36:v\in\mathbb Z_{\ge0}^4,\ \sum v_i=36\}$, grouped into the $478$ orbits of the colour
+permutations. Starting from the point posterior, one step consists of the exact two-child update
+\eqref{eq:bp} at $\lambda^*$ applied to the orbit law, the splitting of \cref{lem:split} applied to
+every resulting posterior, and grouping of equal posteriors. The orbit masses are then rounded down to
+integer multiples of $2^{-48}$ and the deficit is placed on the orbit of full revelation. All
+transition probabilities have the common denominator $288(36\cdot10^6)^2$, and every quantity is an
+exact integer.
+
+By \cref{lem:split}, splitting is an upgrade. Rounding down and moving the deficit to full revelation
+is an upgrade because each orbit is colour-symmetric with uniform mean. By induction the computed law
+at step $n$ is more informative than $\mu_n$ at $\lambda^*$. After $500$ steps its second moment equals
+$U$ exactly. Since $x_n$ is nonincreasing in $n$ ($\sigma_{L_{n+1}}$ is obtained from $\sigma_{L_n}$ by
+independent randomness, so it is a garbling of $\sigma_{L_n}$), the bound holds for all $n\ge500$. For $\lambda<\lambda^*$ it follows from
+\cref{lem:garble}.
+\end{proof}
+
+\begin{lemma}\label{lem:garble}
+For $0<\lambda'<\lambda<1$ and every $n$, $x_n(\lambda')\le x_n(\lambda)$.
+\end{lemma}
+
+\begin{proof}
+Put $\theta=\lambda'/\lambda$. On each edge draw independently a permutation $R_v$ of the colours,
+equal to the identity with probability $\theta$ and uniform otherwise, and set $G_\rho=\mathrm{id}$,
+$G_v=G_{\mathrm{parent}(v)}\circ R_v$. If $\sigma$ is the $\lambda$-broadcast, then $\sigma'_v=G_v(\sigma_v)$
+is the $\lambda'$-broadcast, because averaging over $R_v$ gives the transition
+$M_\lambda M_\theta=M_{\lambda'}$, which does not depend on $G_{\mathrm{parent}(v)}$. The root colour
+is unchanged and $\sigma'_{L_n}$ is a function of $\sigma_{L_n}$ and independent randomness, so the
+$\lambda'$ observation is a garbling of the $\lambda$ observation and Jensen's inequality gives the
+claim.
+\end{proof}
+
+\section{The limit law}\label{sec:limit}
+
+\begin{lemma}\label{lem:fixed}
+Fix $\lambda\in(0,1)$. The laws $\mu_n$ converge weakly to a colour-symmetric law $\mu_\infty$ with
+mean zero, $\mu_\infty=\mathcal T_\lambda\mu_\infty$, and $16\lambda^2x_n\to\int|a|^2\,d\mu_\infty$.
+The process is nonreconstructible if and only if $\mu_\infty$ is the point mass at $0$.
+\end{lemma}
+
+\begin{proof}
+Let $\mathcal F_n$ be generated by all colours at depth at least $n$. By the Markov property
+$\mathbb P(\sigma_\rho=i\mid\mathcal F_n)=\mathbb P(\sigma_\rho=i\mid\sigma_{L_n})$, and the
+$\sigma$-fields decrease, so L\'evy's downward theorem gives almost sure and $L^1$ convergence of the
+posteriors. Hence $\mu_n$ converges weakly and the second moments converge. Symmetry and the mean pass
+to the limit. In \eqref{eq:bp} the density $s$ is at least $1-\lambda^2>0$ and the integrand is a
+bounded continuous function of $(a,b)$, so $\mathcal T_\lambda$ is weakly continuous, and
+$\mu_{n+1}=\mathcal T_\lambda\mu_n$ gives the fixed-point equation. The last statement follows from
+$\E\|p-\tfrac14\one\|_{\mathrm{TV}}\le\sqrt{x_n}$.
+\end{proof}
+
+\begin{lemma}[support]\label{lem:support}
+Let $\varrho=677/1000$ and $0<\lambda\le1/\sqrt2$. Every fixed point $\mu$ of $\mathcal T_\lambda$ is
+supported in $\varrho(4\Simp-\one)$.
+\end{lemma}
+
+\begin{proof}
+A zero-sum vector lies in $r(4\Simp-\one)$ exactly when its coordinates are at least $-r$. Suppose
+$a,b\in r(4\Simp-\one)$ with $0\le r<1$. For fixed $b$ the coordinate $P_i$ is a linear-fractional
+function of $a$ with positive denominator, so its minimum over the simplex is attained at a vertex,
+and likewise in $b$. At a pair of vertices the smallest coordinate of $P$ is $(1-r)^2/(4(1+3r^2))$ when
+the two favoured colours agree and $(1-r)^2/(4(1-r^2))$ otherwise. Hence the outgoing message has
+coordinates at least $-f(r)$ with $f(r)=2\ell r(1+r)/(1+3r^2)$, $\ell=707107/10^6$. The function $f$ is
+increasing on $[0,1]$. Every message lies in $\ell(4\Simp-\one)$, and since $\mu=\mathcal T_\lambda^k\mu$
+for every $k$, $\mu$ is supported in $r_k(4\Simp-\one)$ where $r_0=\ell$ and $r_{k+1}=f(r_k)$. The
+sequence decreases to the fixed point $0.6757\ldots$ of $f$, and an exact rational computation shows
+$r_k\le\varrho$ after finitely many steps.
+\end{proof}
+
+\section{The third moment at a fixed point}\label{sec:cubic}
+
+\begin{proposition}\label{prop:cubic}
+Let $0<\lambda\le1/\sqrt2$ and let $\mu$ be a colour-symmetric fixed point of $\mathcal T_\lambda$ with
+second moment $m$ and third moment $T$. Then
+\[
+\tfrac{69763}{500000}\,m^2\le\big(\lambda^{-3}-2+\tfrac m6\big)\,T\le\tfrac76\,m^2 .
+\]
+In particular $T\ge0$.
+\end{proposition}
+
+\begin{proof}
+For independent colour-symmetric $a,b$ supported in $\ell(4\Simp-\one)$ we show
+\begin{equation}\label{eq:qcf}
+\tfrac{69763}{500000}\,m_am_b\le\E\Big[\frac J{s^2}\Big]-\big(1-\tfrac{m_b}{12}\big)T_a-\big(1-\tfrac{m_a}{12}\big)T_b
+\le\tfrac76\,m_am_b .
+\end{equation}
+With $a=b$ in law and $T_{\mathrm{out}}=T$, \eqref{eq:moments-out} turns \eqref{eq:qcf} into the
+statement, and $\lambda^{-3}\ge2\sqrt2>2$ gives $T\ge0$.
+
+For a coset $C$ of the Klein subgroup $\{e,(01)(23),(02)(13),(03)(12)\}$ in $S_4$ write $b_\pi$ for $b$
+with coordinates permuted by $\pi$, and put
+\[
+G_C=\frac1{|C|}\sum_{\pi\in C}\frac{J(a,b_\pi)}{s(a,b_\pi)^2}-t_a-t_b+\frac{Bt_a+At_b}{12},\qquad
+R_C=\frac3{|C|}\sum_{\pi\in C}(a\cdot b_\pi)^2-AB .
+\]
+For each of the six cosets we prove the pointwise inequality
+\[
+\beta\,AB\le G_C+R_C/2\le M_C\,AB,\qquad \beta=69763/500000,
+\]
+with constants $M_C$ whose average is $3498859/3000000<7/6$. Sort $a$ and parametrise both messages
+by barycentric coordinates $z,w\ge0$ on the ordered simplex with vertices
+\[
+\ell(-1,-1,-1,3),\quad \ell(-1,-1,1,1),\quad \ell(-1,\tfrac13,\tfrac13,\tfrac13),\quad 0 .
+\]
+After clearing the positive
+denominators $s_\pi\ge1-\ell^2$ and the homogenising factors, $G_C+R_C/2$ and $AB$ become polynomials of bidegree $(11,11)$ in $(z,w)$
+with the same $129600$ monomials, and the two inequalities hold coefficient by coefficient. The six
+cosets have the same size, so the average of $G_C+R_C/2$ over them lies between $\beta AB$ and
+$\big(\tfrac16\sum_C M_C\big)AB\le\tfrac76AB$, and it is the average over all of $S_4$. Averaging
+over cosets, using colour symmetry of each law separately, and taking expectations gives
+\eqref{eq:qcf}, since the average of $R_C$ over all cosets is $3(a\cdot b)^2$ averaged over $S_4$ minus
+$AB$, which is zero for zero-sum vectors.
+\end{proof}
+
+\section{The kernel}\label{sec:kernel}
+
+\subsection{Moment identities}
+Let $a,b$ be independent with the same colour-symmetric law of mean zero. For every scalar function
+$w$ invariant under colour permutations,
+\begin{equation}\label{eq:weighted}
+\E[w(a)a_i]=0,\qquad \E[w(a)a_ia_j]=\tfrac13\E[w(a)A]\big(\delta_{ij}-\tfrac14\big),
+\end{equation}
+and the third-moment tensor is $\E a_i^3=T/4$, $\E a_i^2a_j=-T/12$, $\E a_ia_ja_k=T/12$ for distinct
+indices. Conditioning on one of the two messages and applying these gives the expectations in
+\cref{tab:moments}.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ll@{\qquad}ll}
+\toprule
+expression & expectation & expression & expectation\\
+\midrule
+$c^2$ & $m^2/3$ & $p_{33}$ & $T^2/4$\\
+$(A+B)c^2$ & $2mV/3$ & $p_{42}+p_{24}$ & $mQ/2$\\
+$c\,\ell$ & $2mT/3$ & $c(p_{31}+p_{13})$ & $2mQ/3$\\
+$c^3$ & $2T^2/3$ & $p_{21}^2+p_{12}^2$ & $\tfrac{2m}3(Q-V/4)$\\
+$p_{22}$ & $m^2/4$ & $p_{21}p_{12}$ & $T^2/3$\\
+$p_{32}+p_{23}$ & $mT/2$ & $(A+B)p_{22}$ & $mV/2$\\
+$c\,p_{22}$ & $T^2/3$ & & \\
+\bottomrule
+\end{tabular}
+\caption{Expectations under the base measure.}\label{tab:moments}
+\end{table}
+
+Expanding $N=A+B+2c+2\ell+p_{22}-c^2/4$ and $1/s=1-c/4+c^2/(16s)$, the table gives
+$\E N=2m+m^2/6$ and $\E[Nc]=2m^2/3+4mT/3+T^2/6$. At $\lambda=1/\sqrt2$, \eqref{eq:moments-out}
+then yields
+\begin{equation}\label{eq:drift}
+256\,(x-x_{\mathrm{out}})=\tfrac{16}3mT+\tfrac23T^2-\E\Big[\frac{Nc^2}{s}\Big].
+\end{equation}
+
+\subsection{Definition of the kernel}
+For messages $a,b$ and a scalar $m\ge0$ let
+\[
+K(a,b;m)=\tfrac23t_at_b-\frac{Nc^2}{s}-\beta\,m\,AB+\sum_{j=0}^{32}g_j\,\phi_j(a,b;m),
+\qquad \beta=10^{-6},
+\]
+where the functions $\phi_j$ are listed in \cref{tab:features} and the rational coefficients $g_j$ in
+\cref{app:coeff}. Here $F_3=J/s^2$, $F_4=N^2/s^3$, $s_a=\sum_ia_i^4$, $s_b=\sum_ib_i^4$, $p_{31}$ stands
+for $\sum_k(a_k^3b_k+a_kb_k^3)$, and $\kappa=c\,\ell-(Bt_a+At_b)/3$. The coefficients of $\phi_{25}$,
+$\phi_{26}$, $\phi_{27}$ and $\phi_{28}$ are zero, so $K$ is affine in $m$.
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{rl@{\qquad}rl}
+\toprule
+$j$ & $\phi_j$ & $j$ & $\phi_j$\\
+\midrule
+0 & $m(F_3-t_a-t_b)$ & 17 & $m\kappa$\\
+1 & $AB(A+B)-m(F_4-A^2-B^2)$ & 18 & $m\big(p_{32}+p_{23}-(Bt_a+At_b)/4\big)$\\
+2 & $(A+B)(c^2-AB/3)$ & 19 & $c\,p_{22}-t_at_b/3$\\
+3 & $m(c^2-AB/3)$ & 20 & $p_{33}-t_at_b/4$\\
+4 & $\kappa$ & 21 & $p_{42}+p_{24}-(Bs_a+As_b)/4$\\
+5 & $c(A+B)$ & 22 & $mc(A^2+B^2)$\\
+6 & $c(A^2+B^2)$ & 23 & $24c^4-\sum_{\pi\in S_4}(a\cdot b_\pi)^4$\\
+7 & $Bp_{21}+Ap_{12}$ & 24 & $AB(A+B)-m(A^2+B^2)$\\
+8 & $c^3-\tfrac23t_at_b$ & 25 & $Bt_a+At_b-m(t_a+t_b)$\\
+9 & $cAB$ & 26 & $m(A-m)(B-m)$\\
+10 & $mc(A+B)$ & 27 & $(A+B)(A-m)(B-m)$\\
+11 & $c\,t_at_b$ & 28 & $m^2(A+B-2m)$\\
+12 & $m\ell$ & 29 & $c\,p_{31}-(Bs_a+As_b)/3$\\
+13 & $m(p_{22}-AB/4)$ & 30 & $p_{21}^2+p_{12}^2-\big(Bs_a+As_b-AB(A+B)/4\big)/3$\\
+14 & $m\,p_{31}$ & 31 & $p_{21}p_{12}-t_at_b/3$\\
+15 & $mc(t_a+t_b)$ & 32 & $(A+B)(p_{22}-AB/4)$\\
+16 & $m\ell(A+B)$ & & \\
+\bottomrule
+\end{tabular}
+\caption{The functions in the kernel.}\label{tab:features}
+\end{table}
+
+\begin{proposition}\label{prop:expect}
+Let $\mu$ be a colour-symmetric fixed point of $\mathcal T_{1/\sqrt2}$ with second moment $m$ and third
+moment $T$, and let $a,b$ be independent with law $\mu$. Then
+\[
+\E\,K(a,b;m)=256\,(x-x_{\mathrm{out}})-\beta m^3-g^*mT,\qquad
+g^*=\tfrac{16}3-g_0(2\sqrt2-2)>\tfrac{863}{375000000}.
+\]
+\end{proposition}
+
+\begin{proof}
+At $\lambda=1/\sqrt2$ the fixed-point equations \eqref{eq:moments-out} read $\E F_3=2\sqrt2\,T$ and
+$\E F_4=4V$. Hence $\E\phi_0=m(2\sqrt2-2)T$ and $\E\phi_1=2mV-m(4V-2V)=0$. The expectations of
+$\phi_2,\dots,\phi_{32}$ vanish: for $\phi_5,\phi_6,\phi_7,\phi_9,\phi_{10},\phi_{11},\phi_{12},\phi_{14},
+\phi_{15},\phi_{16},\phi_{22}$ by \eqref{eq:weighted}, for $\phi_{23}$ by the symmetry of the law of $b$,
+for $\phi_{24}$ through $\phi_{28}$ by independence and $\E A=\E B=m$, and for the others by
+\cref{tab:moments}. Finally $\E[\tfrac23t_at_b]=\tfrac23T^2$ and $\E[\beta mAB]=\beta m^3$; combining
+with \eqref{eq:drift} gives the formula. The bound on $g^*$ uses $g_0=32189/5000$ and
+$\sqrt2<70711/50000$.
+\end{proof}
+
+\begin{proposition}\label{prop:kernel}
+Let $\varrho=677/1000$ and $M=8U=1375940705703331/3799912185593856$. Then $K(a,b;m)\ge0$ for all
+$a,b\in\varrho(4\Simp-\one)$ and $0\le m\le M$.
+\end{proposition}
+
+\begin{proof}
+Since $K$ is affine in $m$, it suffices to treat $m=0$ and $m=M$. Every function in $K$ is invariant
+under a simultaneous permutation of the colours of $a$ and $b$, so we may assume
+$a_0\le a_1\le a_2\le a_3$; the coordinates of $b$ are then sorted by one of the $24$ permutations
+$\pi$. Write $a$ and the sorted $b$ in barycentric coordinates $z,w\ge0$ of the ordered simplex with
+vertices $\varrho(-1,-1,-1,3)$, $\varrho(-1,-1,1,1)$, $\varrho(-1,\tfrac13,\tfrac13,\tfrac13)$ and $0$, and
+split each of the two charts into the cells $z_0\ge z_3$ and $z_3\ge z_0$ (respectively for $w$),
+substituting $z_0=z_0'+z_3$ or $z_3=z_3'+z_0$. This gives $24\times4\times2=192$ cases. In each case
+\[
+G=K\cdot P^5Q^5S^3(UV)^e,\qquad U=\textstyle\sum z_i,\ V=\sum w_i,\ P=3\cdot10^6U,\ Q=3\cdot10^6V,
+\]
+where $a_i=\alpha_i/P$ and $b_i=\alpha_i'/Q$ with integer linear forms $\alpha_i,\alpha_i'$ in the
+cell variables and $S=4PQ+\sum_i\alpha_i\alpha_i'$ is the cleared form of $s$, is a polynomial in the cell variables, and
+$S>0$ because $s\ge1-\varrho^2$. Let
+\[
+\Sigma_1=AB(A+B)-2t_at_b,\ \Sigma_2=(A+B)(AB-c^2),\ \Sigma_3=m(AB-c^2),\ \Sigma_4=AB(A+B)+2t_at_b .
+\]
+Each $\Sigma_k$ is nonnegative: $\Sigma_2,\Sigma_3$ by Cauchy--Schwarz, and $\Sigma_1,\Sigma_4$ because
+$|t_at_b|\le(AB)^{3/2}\le AB(A+B)/2$. For each case there are rationals $\gamma_k\ge0$ such that every
+coefficient of
+\[
+G-\sum_k\gamma_k\,\Sigma_k\,P^5Q^5S^3(UV)^e
+\]
+is nonnegative; the degree $e$ is $1$ in $176$ cases and $2$ in $16$, $\gamma=0$ in $168$ cases and
+$\gamma=(1/3,0,0,0)$ in the remaining $24$. Since the cell variables are nonnegative and the factors
+$P,Q,S,U,V$ are positive, $K\ge\sum_k\gamma_k\Sigma_k\ge0$ on every cell.
+\end{proof}
+
+\section{Proof of the main theorem}\label{sec:proof}
+
+Let $\lambda=1/\sqrt2$ and let $\mu_\infty$ be the limit law of \cref{lem:fixed}, with moments $m$ and
+$T$ and posterior second moment $x$. By \cref{prop:grid,lem:fixed}, $x\le U$, so $m=8x\le M$. By
+\cref{lem:support} the law is supported in $\varrho(4\Simp-\one)$, so \cref{prop:kernel} applies to
+every pair in its support and $\E K\ge0$. At a fixed point $x_{\mathrm{out}}=x$, so
+\cref{prop:expect} gives $\beta m^3+g^*mT\le0$. By \cref{prop:cubic}, $T\ge0$, and therefore $m=0$.
+Thus $\mu_\infty$ is the point mass at zero and the process is nonreconstructible at $\lambda=1/\sqrt2$.
+For $\lambda<1/\sqrt2$ the same follows from \cref{lem:garble}. Reconstruction for $\lambda>1/\sqrt2$ is
+the Kesten--Stigum theorem. \qed
+
+\begin{remark}
+Since $\E\phi_{24}=0$ at every colour-symmetric law, the coefficient $g_{24}$ does not affect
+\cref{prop:expect}; its value only serves the certificates of \cref{prop:kernel}. The certificates are
+not slack: with $\gamma=0$ in the cases where $\gamma\ne0$, or with the shift $1743/480965$ in $g_{24}$ replaced by $-1/10$, some
+coefficients become negative.
+\end{remark}
+
+\section{The computations}\label{sec:computations}
+
+All computations use exact integer or rational arithmetic; no floating-point value enters a bound.
+The grid computation of \cref{prop:grid} handles the $114481$ unordered pairs of the $478$ orbits per
+step and stores masses as integers over $2^{48}$. Two independent implementations of
+\cref{lem:split} and \eqref{eq:bp} agree on all $500$ intermediate moments and on the final value $U$.
+The coefficient comparisons of \cref{prop:cubic} cover $6\times129600$ inequalities. The $192$
+certificates of \cref{prop:kernel} were computed with \texttt{python-flint}; each polynomial is rebuilt
+from the definitions of \cref{tab:features}, and its value was compared with a direct evaluation of $K$
+at rational points. The certificates, the coefficient files and the programs that rebuild and check them
+are at \url{https://github.com/yspennstate/potts-four-state-binary-tree}.
+
+\appendix
+\section{The coefficients}\label{app:coeff}
+
+\begin{center}\small
+\begin{tabular}{rl@{\qquad}rl}
+\toprule
+$j$ & $g_j$ & $j$ & $g_j$\\
+\midrule
+0 & $32189/5000$ & 17 & $8086351/894289$\\
+1 & $307513/304635$ & 18 & $314989/778090$\\
+2 & $1349531/958408$ & 19 & $-293112/998719$\\
+3 & $13119169/971828$ & 20 & $390816/998719$\\
+4--7 & $0$ & 21 & $2119698/387547$\\
+8 & $2046290/998719$ & 22 & $-760908/859123$\\
+9 & $0$ & 23 & $-9410/911487$\\
+10 & $10803745609/1218540000$ & 24 & $g_{24}$ (below)\\
+11 & $649352/585675$ & 25--28 & $0$\\
+12 & $-96567/5000$ & 29 & $-1454253/671354$\\
+13 & $-33529637/939631$ & 30 & $-1640643/978656$\\
+14 & $-96567/5000$ & 31 & $-146556/998719$\\
+15 & $1007541/284861$ & 32 & $-505057/629438$\\
+16 & $2858842/731359$ & & \\
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{align*}
+g_{24}&=-\frac{44673597587449418976423934191113}{1462309266444848905334068011200160}+\frac{1743}{480965}\\
+&=-\frac{3787526362446847631199691392941357033}{140663915267129350750800004201376990880}\approx-0.026926 .
+\end{align*}
+
+\section*{Acknowledgments and funding}
+This research was supported by the European Research Council (ERC) under the European Union's Horizon Europe
+research and innovation programme (grant agreement No.~101041711), by the Simons Foundation as part of the
+Collaboration on the Mathematical and Scientific Foundations of Deep Learning, by Heights Labs, by Convex Nexus
+Capital, by the Israel Science Foundation (grant number 2258/19), and by the Israel Science Foundation (ISF Grant
+4101/25).
+
+\section*{Declaration of competing interest}
+The author holds equity in Heights Labs and in Convex Nexus Capital and has a management role at Convex Nexus
+Capital. These entities are included in the funding declaration above.
+
+\section*{Declaration of generative AI and AI-assisted technologies}
+The paper comes out of Math Brain, an ongoing project on the use of AI systems for research mathematics. In
+October 2026 OpenAI GPT models, running as research tasks of that project, wrote the proofs and the programs that
+produce the computer-assisted steps. Claude models (Anthropic), working in Claude Code, audited every piece with
+programs of their own, wrote the kernel certificates of \cref{prop:kernel}, assembled the argument, and wrote the
+paper. The author directed the work and is responsible for the content of the paper and for decisions concerning
+its dissemination.
+
+\begin{thebibliography}{99}
+\bibitem{BRZ95} P.~M. Bleher, J.~Ruiz and V.~A. Zagrebnov, On the purity of the limiting Gibbs state for
+the Ising model on the Bethe lattice, \emph{J. Stat. Phys.} 79 (1995), 473--482.
+\bibitem{BM11} N.~Bhatnagar and E.~Maneva, A computational method for bounding the probability of
+reconstruction on trees, \emph{SIAM J. Discrete Math.} 25 (2011), 854--871; arXiv:0903.4812.
+\bibitem{EKPS00} W.~Evans, C.~Kenyon, Y.~Peres and L.~J. Schulman, Broadcasting on trees and the Ising
+model, \emph{Ann. Appl. Probab.} 10 (2000), 410--433.
+\bibitem{KS66} H.~Kesten and B.~P. Stigum, Additional limit theorems for indecomposable multidimensional
+Galton--Watson processes, \emph{Ann. Math. Statist.} 37 (1966), 1463--1481.
+\bibitem{Mos01} E.~Mossel, Reconstruction on trees: beating the second eigenvalue, \emph{Ann. Appl.
+Probab.} 11 (2001), 285--300.
+\bibitem{MSS22} E.~Mossel, A.~Sly and Y.~Sohn, Exact phase transitions for stochastic block models and
+reconstruction on trees, \emph{Ann. Probab.} 53 (2025), 967--1018; arXiv:2212.03362.
+\bibitem{RSZ19} F.~Ricci-Tersenghi, G.~Semerjian and L.~Zdeborov\'a, Typology of phase transitions in
+Bayesian inference problems, \emph{Phys. Rev. E} 99 (2019), 042109; arXiv:1806.11013.
+\bibitem{Sly11} A.~Sly, Reconstruction for the Potts model, \emph{Ann. Probab.} 39 (2011), 1365--1406;
+arXiv:0811.1208.
+\end{thebibliography}
+
+\end{document}
