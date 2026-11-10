@@ -8,7 +8,9 @@ A uniformly random colour is broadcast from the root of the infinite binary tree
 colour with probability $\lambda+(1-\lambda)/4$ and otherwise picks one of the other three colours uniformly. For
 $0<\lambda\le 1/\sqrt2$ the colours at depth $n$ carry asymptotically no information about the root. Together with
 the Kesten–Stigum theorem this makes $2\lambda^2=1$ the reconstruction threshold for the ferromagnetic four-state
-Potts channel on the binary tree.
+Potts channel on the binary tree. The same threshold, on every regular tree, is established in the OpenAI
+preprint *The Reconstruction Threshold for the Ferromagnetic Four-State Potts Model* (5 October 2026,
+https://github.com/openai/math); the proof in this paper follows a different route.
 
 The three-state case on every regular tree is in a separate repository,
 [potts-kesten-stigum-small-degree](https://github.com/yspennstate/potts-kesten-stigum-small-degree).

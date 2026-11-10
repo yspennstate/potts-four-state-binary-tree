@@ -32,7 +32,8 @@ each edge copies its parent's colour with probability $\lambda+(1-\lambda)/4$ an
 of the other three colours uniformly. We prove that for $0<\lambda\le 1/\sqrt2$ the colours at depth
 $n$ carry asymptotically no information about the root colour. Since reconstruction is possible for
 $2\lambda^2>1$ by the theorem of Kesten and Stigum, the Kesten--Stigum bound is the reconstruction
-threshold for the ferromagnetic four-state Potts channel on the binary tree. The proof is computer
+threshold for the ferromagnetic four-state Potts channel on the binary tree. A preprint of OpenAI
+establishes this threshold on every regular tree; the proof given here is different. It is computer
 assisted. A certified upper bound on the second moment of the root posterior, obtained from an exact
 finite-state upgrade of the belief-propagation recursion, places the limiting posterior law in a small
 neighbourhood of the uniform law; an exact polynomial certificate then shows that no nontrivial
@@ -58,11 +59,13 @@ and Sly~\cite{Sly11} proved that the bound is not tight for $q\ge5$ and every la
 tight for $q=3$ and large $d$. Mossel, Sly and Sohn~\cite{MSS22} extended tightness to $q=4$ for large $d$.
 Ricci-Tersenghi, Semerjian and Zdeborov\'a~\cite{RSZ19} predicted, from an expansion of the cavity
 equations, that for the ferromagnetic four-state Potts model the Kesten--Stigum bound is tight for every
-degree distribution. For small degrees the rigorous results stop short of the bound;
-Bhatnagar and Maneva~\cite{BM11} developed a computational method for small trees and recorded the
-remaining gap.
+degree distribution. Bhatnagar and Maneva~\cite{BM11} developed a computational method for small trees
+and recorded the gap that it leaves. The preprint~\cite{OAI4} establishes the ferromagnetic four-state
+threshold on every regular tree and on every Poisson Galton--Watson tree: a polynomial constraint on the
+law of the posterior is preserved by the recursion, and it yields an inequality
+$m_{n+1}\le d\lambda^2m_n-cm_n^3$ for the expected quadratic information $m_n$ at depth $n$.
 
-The main result of this paper settles the binary tree at $q=4$.
+The main result of this paper is the binary-tree case of that result, proved by a different route.
 
 \begin{theorem}\label{thm:main}
 For the four-state Potts channel on the binary tree, the broadcast process is nonreconstructible for
@@ -515,6 +518,8 @@ Galton--Watson processes, \emph{Ann. Math. Statist.} 37 (1966), 1463--1481.
 Probab.} 11 (2001), 285--300.
 \bibitem{MSS22} E.~Mossel, A.~Sly and Y.~Sohn, Exact phase transitions for stochastic block models and
 reconstruction on trees, \emph{Ann. Probab.} 53 (2025), 967--1018; arXiv:2212.03362.
+\bibitem{OAI4} OpenAI, The reconstruction threshold for the ferromagnetic four-state Potts model,
+preprint, 5 October 2026, \url{https://github.com/openai/math}.
 \bibitem{RSZ19} F.~Ricci-Tersenghi, G.~Semerjian and L.~Zdeborov\'a, Typology of phase transitions in
 Bayesian inference problems, \emph{Phys. Rev. E} 99 (2019), 042109; arXiv:1806.11013.
 \bibitem{Sly11} A.~Sly, Reconstruction for the Potts model, \emph{Ann. Probab.} 39 (2011), 1365--1406;
